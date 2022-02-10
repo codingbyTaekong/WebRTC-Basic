@@ -1,6 +1,6 @@
 import http from "http"
 import express from "express";
-import WebSocket from "ws";
+import  Socket  from "socket.io";
 
 const app = express();
 
@@ -18,9 +18,16 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`)
 
 //http 와 ws 서버를 모두 사용하기 위한 작업
 const server = http.createServer(app);
-const wss = new WebSocket.Server({server});
-const handleConnection = (socket)=> {
-    console.log(socket)
-}
-wss.on('connection', handleConnection)
+const io = Socket(server);
+
+io.on("connection", socket => {
+    socket.onAny((e)=> {
+        console.log(`Socket Event:${e}`)
+    })
+    socket.on("enter_room", (roomName, done)=> {
+        socket.join(roomName);
+        done();
+    })
+})
+
 server.listen(3000, handleListen);

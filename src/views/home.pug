@@ -10,6 +10,15 @@ html(lang="en")
         header 
             h1 It Works!
         main
-            h2 Welcom to Nomm
-        //- button call
+            div#welcome
+                form
+                    input(type="text" placeholder="room name", required)
+                    button Enter Room
+            div#room
+                ul
+                form
+                    h3
+                    input(type="text" placeholder="message", required)
+                    button Send
+        script(src="/socket.io/socket.io.js") 
         script(src="/public/js/app.js") 
