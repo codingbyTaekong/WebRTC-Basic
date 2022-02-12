@@ -1,7 +1,7 @@
 const socket = io()
 
-const welcom = document.querySelector('#welcome');
-const form = welcom.querySelector('form');
+const welcome = document.querySelector('#welcome');
+const form = welcome.querySelector('form');
 const room = document.querySelector('#room');
 
 room.hidden = true
@@ -29,7 +29,7 @@ function handleNicknameSubmit(e) {
 }
 
 function showRoom() {
-    welcom.hidden = true;
+    welcome.hidden = true;
     room.hidden = false;
     const h3 = room.querySelector("h3");
     h3.innerHTML = `Room : ${roomName}`
@@ -56,3 +56,16 @@ socket.on("bye", (left)=> {
 })
 
 socket.on("new_message", addMessage)
+
+socket.on("room_change", (rooms)=> {
+    const roomList = welcome.querySelector("ul");
+    roomList.innerHTML = "";
+    if(rooms.length === 0) {
+        return;
+    }
+    rooms.forEach(room=> {
+        const li = document.createElement("li");
+        li.innerHTML = room;
+        roomList.appendChild(li);
+    })
+})

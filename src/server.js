@@ -20,18 +20,44 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`)
 const server = http.createServer(app);
 const io = Socket(server);
 
+function publicRooms() {
+    // const {sids, rooms} = io.sockets.adapter
+    // const socketIds = sids;
+    // const rooms = rooms;
+    const {
+        sockets : {
+            adapter : {sids, rooms},
+        },
+    } = io
+    const publicRooms = [];
+    rooms.forEach((value, key)=> {
+        sids.get(key) === undefined ? publicRooms.push(key) : null
+    })
+    return publicRooms;
+}
+
 io.on("connection", socket => {
     socket["nickname"] = "Anon"
     socket.onAny((e)=> {
+        console.log(io.sockets.adapter)
         console.log(`Socket Event:${e}`)
     })
     socket.on("enter_room", (roomName, done)=> {
         socket.join(roomName);
         done();
         socket.to(roomName).emit("welcome", socket.nickname);
+        // 현재 서버에 등록된 방의 정보를 보냄
+        io.sockets.emit("room_change", publicRooms());
     })
+    
+    // 접속이 완전히 끊기기 전에 발생
     socket.on("disconnecting", ()=> {
         socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname))
+    })
+
+    // 접속이 완전히 끊기고 나면 발생
+    socket.on("disconnect",()=> {
+        io.sockets.emit("room_change", publicRooms());
     })
 
     socket.on("new_message", (msg, room, done)=> {
