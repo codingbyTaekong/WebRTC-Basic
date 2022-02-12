@@ -16,10 +16,16 @@ function addMessage(msg) {
 
 function handleMessageSubmit(e) {
     e.preventDefault();
-    const input = room.querySelector("input");
+    const input = room.querySelector("#msg input");
     socket.emit("new_message", input.value, roomName, ()=> {
         addMessage(`You : ${input.value}`);
     })
+}
+
+function handleNicknameSubmit(e) {
+    e.preventDefault();
+    const input = room.querySelector("#name input");
+    socket.emit("nickname", input.value);
 }
 
 function showRoom() {
@@ -27,8 +33,10 @@ function showRoom() {
     room.hidden = false;
     const h3 = room.querySelector("h3");
     h3.innerHTML = `Room : ${roomName}`
-    const form = room.querySelector('form');
-    form.addEventListener("submit", handleMessageSubmit)
+    const msgForm = room.querySelector('#msg');
+    const nameForm = room.querySelector("#name");
+    msgForm.addEventListener("submit", handleMessageSubmit);
+    nameForm.addEventListener("submit", handleNicknameSubmit);
 }
 form.addEventListener("submit", (e)=> {
     e.preventDefault();
@@ -39,12 +47,12 @@ form.addEventListener("submit", (e)=> {
     input.value = ""
 })
 
-socket.on("welcome", (meg)=> {
-    addMessage("someone Joined!")
+socket.on("welcome", (user)=> {
+    addMessage(`${user} arrived!`)
 })
 
-socket.on("bye", (meg)=> {
-    addMessage("someone left!")
+socket.on("bye", (left)=> {
+    addMessage(`${left} someone left!`)
 })
 
 socket.on("new_message", addMessage)
