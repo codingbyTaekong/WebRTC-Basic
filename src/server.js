@@ -1,6 +1,10 @@
 import http from "http"
 import express from "express";
-import  Socket  from "socket.io";
+// 기본방식
+// import  {Socket}  from "socket.io";
+// admin ui를 사용할 때
+import  {Server}  from "socket.io";
+const {instrument} = require("@socket.io/admin-ui");
 
 const app = express();
 
@@ -18,7 +22,16 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`)
 
 //http 와 ws 서버를 모두 사용하기 위한 작업
 const server = http.createServer(app);
-const io = Socket(server);
+const io = new Server(server, {
+    cors : { 
+        origin : ['https:admin.socket.io'],
+        credentials : true
+    }
+});
+
+instrument(io, {
+    auth : false
+})
 
 function publicRooms() {
     // const {sids, rooms} = io.sockets.adapter
@@ -36,6 +49,10 @@ function publicRooms() {
     return publicRooms;
 }
 
+function countRoom(roomName) {
+    return io.sockets.adapter.rooms.get(roomName)?.size
+}
+
 io.on("connection", socket => {
     socket["nickname"] = "Anon"
     socket.onAny((e)=> {
@@ -45,15 +62,15 @@ io.on("connection", socket => {
     socket.on("enter_room", (roomName, done)=> {
         socket.join(roomName);
         done();
-        socket.to(roomName).emit("welcome", socket.nickname);
+        socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
         // 현재 서버에 등록된 방의 정보를 보냄
         io.sockets.emit("room_change", publicRooms());
+        // 접속이 완전히 끊기기 전에 발생
+        socket.on("disconnecting", ()=> {
+            socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname, countRoom(roomName) - 1))
+        })
     })
     
-    // 접속이 완전히 끊기기 전에 발생
-    socket.on("disconnecting", ()=> {
-        socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname))
-    })
 
     // 접속이 완전히 끊기고 나면 발생
     socket.on("disconnect",()=> {
