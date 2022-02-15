@@ -5,7 +5,7 @@ import express from "express";
 // admin ui를 사용할 때
 import  Socket  from "socket.io";
 
-let port = 3003;
+let port = 3001;
 
 const app = express();
 app.set('view engine', 'pug');
@@ -22,10 +22,19 @@ const server = http.createServer(app);
 const io = Socket(server);
 
 io.on("connection", socket=> {
-    socket.on('join_room', (roomName, done)=> {
+    socket.on('join_room', (roomName)=> {
         socket.join(roomName);
-        done();
         socket.to(roomName).emit("welcome")
+    })
+    socket.on('offer', (offer, roomName) => {
+        console.log("send the offer")
+        socket.to(roomName).emit('offer', offer);
+    })
+    socket.on('answer', (answer, roomName)=> {
+        socket.to(roomName).emit('answer', answer);
+    })
+    socket.on('ice', (ice, roomName)=> {
+        socket.to(roomName).emit('ice', ice)
     })
 })
 

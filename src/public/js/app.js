@@ -15,6 +15,7 @@ let myStream;
 let muted = false;
 let cameraOff = false;
 let roomName;
+let myPeerConnection;
 
 async function getCameras() {
     try {
@@ -59,7 +60,7 @@ async function getMedia(deviceId) {
 }
 
 function handleMuteClick() {
-    console.log(myStream.getAudioTracks());
+    // console.log(myStream.getAudioTracks());
     myStream.getAudioTracks().forEach(track=>track.enabled =!track.enabled);
     if (!muted) {
         muteBtn.innerHTML = 'Unmute';
@@ -93,16 +94,19 @@ camerasSelect.addEventListener('input', handleCameraChange);
 const welcome = document.querySelector('#welcome')
 const welcomeForm = welcome.querySelector('form');
 
-function startMedia() {
+async function initCall() {
     welcome.hidden = true;
     call.hidden = false;
-    getMedia();
+    await getMedia();
+    // RTC 연결
+    makeConnection();
 }
 
-function handleWelcomeSubmit (e) {
+async function handleWelcomeSubmit (e) {
     e.preventDefault();
     const input = welcomeForm.querySelector('input');
-    socket.emit("join_room",input.value, startMedia);
+    await initCall()
+    socket.emit("join_room",input.value);
     roomName = input.value;
     input.value = '';
 }
@@ -111,7 +115,51 @@ welcomeForm.addEventListener('submit', handleWelcomeSubmit);
 
 
 // socket code
-
-socket.on('welcome', ()=> {
+// peer A 브라우저에서 실행(먼저들어온 유저)
+socket.on('welcome', async ()=> {
     console.log("someone joined")
+    const offer = await myPeerConnection.createOffer();
+    myPeerConnection.setLocalDescription(offer)
+    socket.emit("offer", offer, roomName)
 })
+
+// peer B 브라우저에서 실행(나중에 들어온 유저)
+socket.on('offer', async (offer)=> {
+    // console.log(offer)
+    myPeerConnection.setRemoteDescription(offer)
+    const answer = await myPeerConnection.createAnswer();
+    myPeerConnection.setLocalDescription(answer);
+    socket.emit('answer', answer, roomName);
+})
+
+// peer A 브라우저에서 실행(먼저들어온 유저)
+socket.on('answer', answer => {
+    myPeerConnection.setRemoteDescription(answer)
+})
+
+socket.on('ice', ice => {
+    myPeerConnection.addIceCandidate(ice);
+})
+
+// RTC code
+function makeConnection() {
+    myPeerConnection = new RTCPeerConnection();
+    myPeerConnection.addEventListener('icecandidate', handleIce)
+    myPeerConnection.addEventListener('addstream', handleAddStream)
+    // console.log(myStream.getTracks())
+    // addStream === addTrack 같은 함수
+    myStream.getTracks().forEach(track=>myPeerConnection.addTrack(track, myStream))
+}
+
+function handleIce(data) {
+    socket.emit('ice', data.candidate, roomName)
+    console.log("got icecandidate");
+    console.log(data)
+}
+
+function handleAddStream(data) {
+    const peerFace = document.querySelector('#peerFace');
+    peerFace.srcObject = data.stream;
+    console.log('got an event from my peer');
+    console.log(data)
+}
