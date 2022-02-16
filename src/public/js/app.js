@@ -39,7 +39,8 @@ async function getCameras() {
 async function getMedia(deviceId) {
     const initialConstrains = {
         audio : true,
-        video : { facingMode : 'user' }
+        video : { facingMode : 'user' },
+        // video : false
     }
     const cameraConstrains = {
         audio : true,
@@ -81,8 +82,18 @@ function handlecameraClick() {
     }
 }
 async function handleCameraChange() {
+    // getMedia => 나의 미디어 트랙을 찾는 함수
     await getMedia(camerasSelect.value);
     console.log(camerasSelect.value);
+    if (myPeerConnection) {
+
+        const videoTrack = myStream.getVideoTracks()[0]
+        // videoSender => 말 그대로 비디
+        const videoSender = myPeerConnection.getSenders().find(sender => sender.track.kind === "video");
+        console.log(videoSender)
+
+        videoSender.replaceTrack(videoTrack)
+    }
 }
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handlecameraClick);
@@ -143,10 +154,22 @@ socket.on('ice', ice => {
 
 // RTC code
 function makeConnection() {
-    myPeerConnection = new RTCPeerConnection();
+    myPeerConnection = new RTCPeerConnection({
+        iceServers : [
+            {
+                urls : [
+                    "stun:stun.l.google.com:19302",
+                    "stun:stun1.l.google.com:19302",
+                    "stun:stun2.l.google.com:19302",
+                    "stun:stun3.l.google.com:19302",
+                    "stun:stun4.l.google.com:19302"
+                ]
+            }
+        ]
+    });
     myPeerConnection.addEventListener('icecandidate', handleIce)
     myPeerConnection.addEventListener('addstream', handleAddStream)
-    // console.log(myStream.getTracks())
+    
     // addStream === addTrack 같은 함수
     myStream.getTracks().forEach(track=>myPeerConnection.addTrack(track, myStream))
 }
@@ -158,8 +181,17 @@ function handleIce(data) {
 }
 
 function handleAddStream(data) {
-    const peerFace = document.querySelector('#peerFace');
+    // 원본코드 {
+    // const peerFace = document.querySelector('#peerFace');
+    // peerFace.srcObject = data.stream;
+    // }
+    const peerFace = document.createElement('video');
+    peerFace.autoplay = true;
+    peerFace.playsInline = true;
+    peerFace.style.width = '400px'
+    peerFace.style.height = '400px'
     peerFace.srcObject = data.stream;
+    document.querySelector('#call').appendChild(peerFace)
     console.log('got an event from my peer');
     console.log(data)
 }
