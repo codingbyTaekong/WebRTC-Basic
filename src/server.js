@@ -27,7 +27,7 @@ io.on("connection", socket=> {
         socket.to(roomName).emit("welcome")
     })
     socket.on('offer', (offer, roomName) => {
-        console.log("send the offer")
+        console.log("offer(초대장)을 받았습니다.")
         socket.to(roomName).emit('offer', offer);
     })
     socket.on('answer', (answer, roomName)=> {

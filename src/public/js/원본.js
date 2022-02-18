@@ -17,20 +17,16 @@ let cameraOff = false;
 let roomName;
 let myPeerConnection;
 
-async function getAudios() {
+async function getCameras() {
     try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        const audios = devices.filter(device=> device.kind === 'audioinput');
-        const currentAudio = myStream.getAudioTracks()[0];
-        audios.map(audio => {
-            console.log(currentAudio)
-            console.log(audio)
-            console.log(audio.deviceId)
-            console.log(audio.label)
+        const cameras = devices.filter(device=> device.kind === 'videoinput');
+        const currentCamera = myStream.getVideoTracks()[0];
+        cameras.map(camera => {
             const option = document.createElement('option');
-            option.value = audio.deviceId;
-            option.innerText = audio.label
-            if (currentAudio.label === audio.label) {
+            option.value = camera.deviceId;
+            option.innerText = camera.label
+            if (currentCamera.label === camera.label) {
                 option.selected = true;
             }
             camerasSelect.appendChild(option)
@@ -43,12 +39,12 @@ async function getAudios() {
 async function getMedia(deviceId) {
     const initialConstrains = {
         audio : true,
-        // video : { facingMode : 'user' },
-        video : false
+        video : { facingMode : 'user' },
+        // video : false
     }
     const cameraConstrains = {
         audio : true,
-        video : false
+        video : { deviceId : { exact : deviceId } }
     }
     try {
         myStream = await navigator.mediaDevices.getUserMedia(
@@ -56,7 +52,7 @@ async function getMedia(deviceId) {
         )
         myFace.srcObject = myStream
         if (!deviceId) {
-            await getAudios();
+            await getCameras();
         }
     }
     catch (e) {
@@ -64,7 +60,6 @@ async function getMedia(deviceId) {
     }
 }
 
-// 음성 온오프
 function handleMuteClick() {
     // console.log(myStream.getAudioTracks());
     myStream.getAudioTracks().forEach(track=>track.enabled =!track.enabled);
@@ -76,7 +71,6 @@ function handleMuteClick() {
         muted = false;
     }
 }
-// 카메라 온오프
 function handlecameraClick() {
     myStream.getVideoTracks().forEach(track=>track.enabled =!track.enabled);
     if (cameraOff) {
@@ -93,11 +87,12 @@ async function handleCameraChange() {
     console.log(camerasSelect.value);
     if (myPeerConnection) {
 
-        const audioTrack = myStream.getAudioTracks()[0]
+        const videoTrack = myStream.getVideoTracks()[0]
         // videoSender => 말 그대로 비디
-        const auduiSender = myPeerConnection.getSenders().find(sender => sender.track.kind === "audio");
+        const videoSender = myPeerConnection.getSenders().find(sender => sender.track.kind === "video");
+        console.log(videoSender)
 
-        auduiSender.replaceTrack(audioTrack)
+        videoSender.replaceTrack(videoTrack)
     }
 }
 muteBtn.addEventListener("click", handleMuteClick);
@@ -131,10 +126,9 @@ welcomeForm.addEventListener('submit', handleWelcomeSubmit);
 
 
 // socket code
-// peer A 브라우저에서 실행(먼저들어온 유저) 이미 들어와있는 유저에게만 실행됨
+// peer A 브라우저에서 실행(먼저들어온 유저)
 socket.on('welcome', async ()=> {
-    console.log("누군가 입장했습니다.")
-    // offer는 초대장(접속코드)와 같음
+    console.log("someone joined")
     const offer = await myPeerConnection.createOffer();
     myPeerConnection.setLocalDescription(offer)
     socket.emit("offer", offer, roomName)
@@ -159,7 +153,6 @@ socket.on('ice', ice => {
 })
 
 // RTC code
-// 연결을 만드는 함수
 function makeConnection() {
     myPeerConnection = new RTCPeerConnection({
         iceServers : [
@@ -178,23 +171,19 @@ function makeConnection() {
     myPeerConnection.addEventListener('addstream', handleAddStream)
     
     // addStream === addTrack 같은 함수
-    // myStream.getAudioTracks()[0].forEach(track=>myPeerConnection.addTrack(track, myStream))
-    
-    // 음성밖에 없기 때문에 반복문을 쓸 필요가 없음
-    myPeerConnection.addTrack(myStream.getAudioTracks()[0], myStream)
+    myStream.getTracks().forEach(track=>myPeerConnection.addTrack(track, myStream))
 }
 
 function handleIce(data) {
-    console.log(data)
-    console.log(myStream.getAudioTracks()[0])
     socket.emit('ice', data.candidate, roomName)
     console.log("got icecandidate");
+    console.log(data)
 }
 
 function handleAddStream(data) {
     // 원본코드 {
     const peerFace = document.querySelector('#peerFace');
-    // peerFace.srcObject = data.stream;
+    peerFace.srcObject = data.stream;
     // }
     // const peerFace = document.createElement('video');
     // peerFace.autoplay = true;
