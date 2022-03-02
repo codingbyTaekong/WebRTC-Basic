@@ -1,0 +1,21 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+#call {
+    display: flex;
+    flex-wrap: wrap;
+}
+#controller {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+}
+/* #cameras {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+} */

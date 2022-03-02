@@ -6,20 +6,24 @@ html(lang="en")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         title Noom
         link(rel="stylesheet", href="https://unpkg.com/mvp.css")
+        link(rel="stylesheet", href="/public/css/app.css")
     body 
         header 
             h1 비디오!
         main
             die#welcome
                 form
-                    input(type="text", placeholder="room name", required)
+                    input(type="text", placeholder="nickname", required)
                     button Enter room
             div#call
                 div#myStream
-                    video#myFace(autoplay, playsinline, width="400", height="400")
-                    button#mute mute
-                    button#camera Turn Camera Off
-                    select#cameras() 
-                video#peerFace(autoplay, playsinline, width="400", height="400")
+                    span.nickname
+                    video#myFace(autoplay, playsinline, width="200", height="200")
+                
+                //- video#peerFace(autoplay, playsinline, width="400", height="400")
+            div#controller
+                select#cameras() 
+                button#mute mute
+                //- button#camera Turn Camera Off
         script(src="/socket.io/socket.io.js") 
         script(src="/public/js/app.js") 
