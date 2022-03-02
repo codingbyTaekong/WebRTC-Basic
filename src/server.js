@@ -1,10 +1,17 @@
-import http from "http"
-import express from "express";
-// 기본방식
-// import  {Socket}  from "socket.io";
-// admin ui를 사용할 때
-import  Socket  from "socket.io";
-import wrtc from 'wrtc'
+// import http from "http"
+// import express from "express";
+// // 기본방식
+// // import  {Socket}  from "socket.io";
+// // admin ui를 사용할 때
+// import  Socket  from "socket.io";
+// import wrtc from 'wrtc'
+
+const http = require('http');
+const express = require('express');
+const Socket = require('socket.io');
+const wrtc = require('wrtc');
+const { createAdapter } = require("@socket.io/cluster-adapter");
+const { setupWorker } = require("@socket.io/sticky");
 
 
 let port = 3001;
@@ -22,6 +29,8 @@ app.get('/*', (req,res)=> res.redirect('/'))
 //http 와 ws 서버를 모두 사용하기 위한 작업
 const server = http.createServer(app);
 const io = Socket(server);
+io.adapter(createAdapter());
+setupWorker(io);
 
 let roomName = "bigchoi"
 // 서버와 실제로 P2P로 주고받을 RTC objects
