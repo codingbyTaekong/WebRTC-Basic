@@ -14,10 +14,10 @@ const { createAdapter } = require("@socket.io/cluster-adapter");
 const { setupWorker } = require("@socket.io/sticky");
 const fs = require('fs');
 
-let port = 3001;
+let port = 443;
 const options = {
     key : fs.readFileSync(__dirname + '/keys/server.key'),
-    cert: fs.readFileSync(__dirname + '/keys/private.crt'),
+    cert: fs.readFileSync(__dirname + '/keys/server.crt'),
     ca: fs.readFileSync(__dirname + '/keys/server.csr')
 }
 const app = express();
@@ -31,7 +31,7 @@ app.get('/*', (req,res)=> res.redirect('/'))
 // app.listen(3000, handleListen);
 
 //http 와 ws 서버를 모두 사용하기 위한 작업
-const server = https.createServer(app);
+const server = https.createServer(options, app);
 const io = Socket(server);
 io.adapter(createAdapter());
 setupWorker(io);
