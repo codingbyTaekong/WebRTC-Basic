@@ -14,11 +14,11 @@ const { createAdapter } = require("@socket.io/cluster-adapter");
 const { setupWorker } = require("@socket.io/sticky");
 const fs = require('fs');
 
-let port = 443;
+let port = 3001;
 const options = {
-    key : fs.readFileSync(__dirname + '/keys/server.key'),
-    cert: fs.readFileSync(__dirname + '/keys/server.crt'),
-    ca: fs.readFileSync(__dirname + '/keys/server.csr')
+    key : fs.readFileSync(__dirname + '/keys/local.pem'),
+    cert: fs.readFileSync(__dirname + '/keys/public.pem'),
+    // ca: fs.readFileSync(__dirname + '/keys/server.csr')
 }
 const app = express();
 app.set('view engine', 'pug');
@@ -33,8 +33,8 @@ app.get('/*', (req,res)=> res.redirect('/'))
 //http 와 ws 서버를 모두 사용하기 위한 작업
 const server = https.createServer(options, app);
 const io = Socket(server);
-io.adapter(createAdapter());
-setupWorker(io);
+// io.adapter(createAdapter());
+// setupWorker(io);
 
 let roomName = "bigchoi"
 // 서버와 실제로 P2P로 주고받을 RTC objects
