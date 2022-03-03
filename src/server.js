@@ -12,10 +12,14 @@ const Socket = require('socket.io');
 const wrtc = require('wrtc');
 const { createAdapter } = require("@socket.io/cluster-adapter");
 const { setupWorker } = require("@socket.io/sticky");
-
+const fs = require('fs');
 
 let port = 3001;
-
+const options = {
+    key : fs.readFileSync(__dirname + '/keys/server.key'),
+    cert: fs.readFileSync(__dirname + '/keys/private.crt'),
+    ca: fs.readFileSync(__dirname + '/keys/server.csr')
+}
 const app = express();
 app.set('view engine', 'pug');
 app.set('views', __dirname + "/views");
@@ -27,7 +31,7 @@ app.get('/*', (req,res)=> res.redirect('/'))
 // app.listen(3000, handleListen);
 
 //http 와 ws 서버를 모두 사용하기 위한 작업
-const server = http.createServer(app);
+const server = http.createServer(options,app);
 const io = Socket(server);
 io.adapter(createAdapter());
 setupWorker(io);
