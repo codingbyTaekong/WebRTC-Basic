@@ -6,7 +6,7 @@
 // import  Socket  from "socket.io";
 // import wrtc from 'wrtc'
 
-const http = require('http');
+const https = require('https');
 const express = require('express');
 const Socket = require('socket.io');
 const wrtc = require('wrtc');
@@ -31,7 +31,7 @@ app.get('/*', (req,res)=> res.redirect('/'))
 // app.listen(3000, handleListen);
 
 //http 와 ws 서버를 모두 사용하기 위한 작업
-const server = http.createServer(options,app);
+const server = https.createServer(app);
 const io = Socket(server);
 io.adapter(createAdapter());
 setupWorker(io);
