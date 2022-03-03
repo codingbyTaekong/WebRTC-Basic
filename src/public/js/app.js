@@ -1,4 +1,6 @@
-const socket = io();
+const socket = io({
+    transports : ["websocket"]
+});
 const myFace = document.querySelector('#myFace');
 const muteBtn = document.querySelector("#mute");
 // const cameraBtn = document.querySelector('#camera');
@@ -24,10 +26,6 @@ async function getCameras() {
         const audios = devices.filter(device=> device.kind === 'audioinput');
         const currentAudio = myStream.getAudioTracks()[0];
         audios.map(audio => {
-            console.log(currentAudio)
-            console.log(audio)
-            console.log(audio.deviceId)
-            console.log(audio.label)
             const option = document.createElement('option');
             option.value = camera.deviceId;
             option.innerText = camera.label;
@@ -223,7 +221,7 @@ async function otherUserConnection(user, mySocketID) {
         console.log(e.streams)
         const container = document.createElement('div');
         container.classList.add('userStream');
-        container.classList.add(user.id);
+        container.classList.add(`user_${user.id}`);
         const nickname = document.createElement('span');
         nickname.textContent = user.nickname;
         const video = document.createElement('video');
@@ -349,7 +347,7 @@ socket.on('otherUsers', (otherUsers)=> {
 socket.on('outuser', (id)=> {
     if (users.has(id)) {
         users.get(id).conn.close();
-        document.querySelector(`.${id}`).remove()
+        document.querySelector(`.user_${id}`).remove()
         users.delete(id);
     }
 })

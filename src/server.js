@@ -120,7 +120,7 @@ io.on("connection", socket=> {
             if (otherUsers.length > 0) {
                 console.log('다른 유저들',otherUsers.length)
                 // 내 자신에게 내가 아닌 다른 유저의 리스트를 보내준다.
-                socket.emit('otherUsers', otherUsers);
+                io.to(socket.id).emit('otherUsers', otherUsers);
             }
             try {
                 // 내가 아닌 다른 사람들에게 내가 들어왔다고 알려야함.(이미 들어와있는 유저들에게)
